@@ -1,0 +1,11 @@
+# Modules
+- Dashboard
+- Data Catalog
+- Metadata Management
+- Business Glossary
+- Data Dictionary
+- Data Quality
+- Data Lineage
+- Governance Policies
+- Reports
+- Administration

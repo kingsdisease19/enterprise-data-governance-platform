@@ -1,0 +1,5 @@
+Who will use this platform? (e.g., data engineers, compliance officers, IT admins) 
+What problems does it solve? (e.g., no central visibility into where sensitive data lives)
+What are the main modules? (e.g., data catalog, access control, audit logging, policy engine)
+What data needs to be stored? (e.g., table/column metadata, ownership, sensitivity classification, access logs)
+How will users interact with it? (e.g., web dashboard, API, CLI tool)

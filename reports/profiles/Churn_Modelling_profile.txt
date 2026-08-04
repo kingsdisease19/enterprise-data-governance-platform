@@ -1,0 +1,100 @@
+DATA PROFILING REPORT
+============================================================
+
+File: datasets\raw\Churn_Modelling.csv
+Rows: 10000
+Columns: 14
+Memory Usage: 2.41 MB
+Duplicate Rows: 0
+
+COLUMN INFORMATION
+------------------------------------------------------------
+
+RowNumber:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 10000
+  Mean: 5000.50
+
+CustomerId:
+  Data Type: int64
+  Missing Values: 0
+  Min: 15565701
+  Max: 15815690
+  Mean: 15690940.57
+
+Surname:
+  Data Type: str
+  Missing Values: 0
+
+CreditScore:
+  Data Type: int64
+  Missing Values: 0
+  Min: 350
+  Max: 850
+  Mean: 650.53
+
+Geography:
+  Data Type: str
+  Missing Values: 0
+
+Gender:
+  Data Type: str
+  Missing Values: 0
+
+Age:
+  Data Type: int64
+  Missing Values: 0
+  Min: 18
+  Max: 92
+  Mean: 38.92
+
+Tenure:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 10
+  Mean: 5.01
+
+Balance:
+  Data Type: float64
+  Missing Values: 0
+  Min: 0.0
+  Max: 250898.09
+  Mean: 76485.89
+
+NumOfProducts:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 4
+  Mean: 1.53
+
+HasCrCard:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 1
+  Mean: 0.71
+
+IsActiveMember:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 1
+  Mean: 0.52
+
+EstimatedSalary:
+  Data Type: float64
+  Missing Values: 0
+  Min: 11.58
+  Max: 199992.48
+  Mean: 100090.24
+
+Exited:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 1
+  Mean: 0.20

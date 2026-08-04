@@ -1,0 +1,229 @@
+DATA PROFILING REPORT
+============================================================
+
+File: datasets\raw\WA_Fn-UseC_-HR-Employee-Attrition.csv
+Rows: 1470
+Columns: 35
+Memory Usage: 1.02 MB
+Duplicate Rows: 0
+
+COLUMN INFORMATION
+------------------------------------------------------------
+
+Age:
+  Data Type: int64
+  Missing Values: 0
+  Min: 18
+  Max: 60
+  Mean: 36.92
+
+Attrition:
+  Data Type: str
+  Missing Values: 0
+
+BusinessTravel:
+  Data Type: str
+  Missing Values: 0
+
+DailyRate:
+  Data Type: int64
+  Missing Values: 0
+  Min: 102
+  Max: 1499
+  Mean: 802.49
+
+Department:
+  Data Type: str
+  Missing Values: 0
+
+DistanceFromHome:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 29
+  Mean: 9.19
+
+Education:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 5
+  Mean: 2.91
+
+EducationField:
+  Data Type: str
+  Missing Values: 0
+
+EmployeeCount:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 1
+  Mean: 1.00
+
+EmployeeNumber:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 2068
+  Mean: 1024.87
+
+EnvironmentSatisfaction:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 4
+  Mean: 2.72
+
+Gender:
+  Data Type: str
+  Missing Values: 0
+
+HourlyRate:
+  Data Type: int64
+  Missing Values: 0
+  Min: 30
+  Max: 100
+  Mean: 65.89
+
+JobInvolvement:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 4
+  Mean: 2.73
+
+JobLevel:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 5
+  Mean: 2.06
+
+JobRole:
+  Data Type: str
+  Missing Values: 0
+
+JobSatisfaction:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 4
+  Mean: 2.73
+
+MaritalStatus:
+  Data Type: str
+  Missing Values: 0
+
+MonthlyIncome:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1009
+  Max: 19999
+  Mean: 6502.93
+
+MonthlyRate:
+  Data Type: int64
+  Missing Values: 0
+  Min: 2094
+  Max: 26999
+  Mean: 14313.10
+
+NumCompaniesWorked:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 9
+  Mean: 2.69
+
+Over18:
+  Data Type: str
+  Missing Values: 0
+
+OverTime:
+  Data Type: str
+  Missing Values: 0
+
+PercentSalaryHike:
+  Data Type: int64
+  Missing Values: 0
+  Min: 11
+  Max: 25
+  Mean: 15.21
+
+PerformanceRating:
+  Data Type: int64
+  Missing Values: 0
+  Min: 3
+  Max: 4
+  Mean: 3.15
+
+RelationshipSatisfaction:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 4
+  Mean: 2.71
+
+StandardHours:
+  Data Type: int64
+  Missing Values: 0
+  Min: 80
+  Max: 80
+  Mean: 80.00
+
+StockOptionLevel:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 3
+  Mean: 0.79
+
+TotalWorkingYears:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 40
+  Mean: 11.28
+
+TrainingTimesLastYear:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 6
+  Mean: 2.80
+
+WorkLifeBalance:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 4
+  Mean: 2.76
+
+YearsAtCompany:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 40
+  Mean: 7.01
+
+YearsInCurrentRole:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 18
+  Mean: 4.23
+
+YearsSinceLastPromotion:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 15
+  Mean: 2.19
+
+YearsWithCurrManager:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 17
+  Mean: 4.12

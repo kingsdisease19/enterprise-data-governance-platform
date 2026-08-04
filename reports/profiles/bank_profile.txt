@@ -1,0 +1,100 @@
+DATA PROFILING REPORT
+============================================================
+
+File: datasets\raw\bank.csv
+Rows: 11162
+Columns: 17
+Memory Usage: 6.36 MB
+Duplicate Rows: 0
+
+COLUMN INFORMATION
+------------------------------------------------------------
+
+age:
+  Data Type: int64
+  Missing Values: 0
+  Min: 18
+  Max: 95
+  Mean: 41.23
+
+job:
+  Data Type: str
+  Missing Values: 0
+
+marital:
+  Data Type: str
+  Missing Values: 0
+
+education:
+  Data Type: str
+  Missing Values: 0
+
+default:
+  Data Type: str
+  Missing Values: 0
+
+balance:
+  Data Type: int64
+  Missing Values: 0
+  Min: -6847
+  Max: 81204
+  Mean: 1528.54
+
+housing:
+  Data Type: str
+  Missing Values: 0
+
+loan:
+  Data Type: str
+  Missing Values: 0
+
+contact:
+  Data Type: str
+  Missing Values: 0
+
+day:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 31
+  Mean: 15.66
+
+month:
+  Data Type: str
+  Missing Values: 0
+
+duration:
+  Data Type: int64
+  Missing Values: 0
+  Min: 2
+  Max: 3881
+  Mean: 371.99
+
+campaign:
+  Data Type: int64
+  Missing Values: 0
+  Min: 1
+  Max: 63
+  Mean: 2.51
+
+pdays:
+  Data Type: int64
+  Missing Values: 0
+  Min: -1
+  Max: 854
+  Mean: 51.33
+
+previous:
+  Data Type: int64
+  Missing Values: 0
+  Min: 0
+  Max: 58
+  Mean: 0.83
+
+poutcome:
+  Data Type: str
+  Missing Values: 0
+
+deposit:
+  Data Type: str
+  Missing Values: 0

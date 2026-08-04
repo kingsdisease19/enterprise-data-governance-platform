@@ -2,38 +2,44 @@
 """
 Data Governance Platform - Data Profiling Script
 
-Loads a CSV, profiles it, and saves a summary report.
+Loads a CSV or Excel file, profiles it, and saves a summary report.
 
 Usage:
     python scripts/profile_dataset.py datasets/raw/bank.csv
+    python scripts/profile_dataset.py datasets/raw/bank.xlsx 0
 """
 
-import sys
 import os
-import pandas as pd
+import sys
 from pathlib import Path
 
+import pandas as pd
 
-def profile_dataset(csv_path):
+
+def profile_dataset(filepath, sheet_name=0):
     """
-    Profile a CSV dataset and generate a summary report.
-    
+    Profile a CSV or Excel dataset and generate a summary report.
+
     Args:
-        csv_path (str): Path to the CSV file to profile
-        
+        filepath (str): Path to the CSV or Excel file to profile
+        sheet_name (int | str, optional): Excel sheet name or index. Defaults to 0.
+
     Returns:
-        dict: Dictionary containing profile summary
+        tuple: (profile dict, DataFrame)
     """
-    if not os.path.exists(csv_path):
-        print(f"Error: File not found: {csv_path}")
+    if not os.path.exists(filepath):
+        print(f"Error: File not found: {filepath}")
         return None
-    
-    # Load the dataset
-    df = pd.read_csv(csv_path)
-    
-    # Generate profile summary
+
+    filename = os.path.basename(filepath)
+
+    if str(filepath).lower().endswith((".xlsx", ".xls")):
+        df = pd.read_excel(filepath, sheet_name=sheet_name)
+    else:
+        df = pd.read_csv(filepath)
+
     profile = {
-        "file": csv_path,
+        "file": filename,
         "rows": len(df),
         "columns": len(df.columns),
         "column_names": list(df.columns),
@@ -42,69 +48,62 @@ def profile_dataset(csv_path):
         "duplicates": df.duplicated().sum(),
         "memory_usage": df.memory_usage(deep=True).sum() / 1024 / 1024,  # MB
     }
-    
+
     return profile, df
 
 
-def save_report(profile, df, output_path):
-    """
-    Save the profile summary to a report file.
-    
-    Args:
-        profile (dict): Profile summary dictionary
-        df (pd.DataFrame): The profiled dataframe
-        output_path (str): Path to save the report
-    """
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
-    with open(output_path, 'w') as f:
-        f.write("DATA PROFILING REPORT\n")
-        f.write("=" * 60 + "\n\n")
-        
-        f.write(f"File: {profile['file']}\n")
-        f.write(f"Rows: {profile['rows']}\n")
-        f.write(f"Columns: {profile['columns']}\n")
-        f.write(f"Memory Usage: {profile['memory_usage']:.2f} MB\n")
-        f.write(f"Duplicate Rows: {profile['duplicates']}\n\n")
-        
-        f.write("COLUMN INFORMATION\n")
-        f.write("-" * 60 + "\n")
-        for col in profile['column_names']:
-            f.write(f"\n{col}:\n")
-            f.write(f"  Data Type: {profile['data_types'][col]}\n")
-            f.write(f"  Missing Values: {profile['missing_values'][col]}\n")
-            if df[col].dtype in ['int64', 'float64']:
-                f.write(f"  Min: {df[col].min()}\n")
-                f.write(f"  Max: {df[col].max()}\n")
-                f.write(f"  Mean: {df[col].mean():.2f}\n")
-    
-    print(f"Report saved to: {output_path}")
+def format_profile_report(profile, df):
+    """Format the profiling results as Markdown."""
+    lines = []
+    lines.append("# Data Profiling Report")
+    lines.append("")
+    lines.append(f"- File: {profile['file']}")
+    lines.append(f"- Rows: {profile['rows']}")
+    lines.append(f"- Columns: {profile['columns']}")
+    lines.append(f"- Memory Usage: {profile['memory_usage']:.2f} MB")
+    lines.append(f"- Duplicate Rows: {profile['duplicates']}")
+    lines.append("")
+    lines.append("## Column Information")
+    lines.append("")
+
+    for col in profile["column_names"]:
+        lines.append(f"### {col}")
+        lines.append(f"- Data Type: {profile['data_types'][col]}")
+        lines.append(f"- Missing Values: {profile['missing_values'][col]}")
+        if pd.api.types.is_numeric_dtype(df[col]):
+            lines.append(f"- Min: {df[col].min()}")
+            lines.append(f"- Max: {df[col].max()}")
+            lines.append(f"- Mean: {df[col].mean():.2f}")
+        lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def main():
     """Main entry point for the profiling script."""
     if len(sys.argv) < 2:
-        print("Usage: python scripts/profile_dataset.py <csv_path>")
+        print("Usage: python scripts/profile_dataset.py <path-to-file> [sheet_name]")
         sys.exit(1)
-    
-    csv_path = sys.argv[1]
-    
-    # Profile the dataset
-    result = profile_dataset(csv_path)
+
+    input_path = sys.argv[1]
+    sheet = sys.argv[2] if len(sys.argv) > 2 else 0
+
+    result = profile_dataset(input_path, sheet_name=sheet)
     if result is None:
         sys.exit(1)
-    
+
     profile, df = result
-    
-    # Generate output path
-    filename = Path(csv_path).stem
-    output_path = f"reports/profiles/{filename}_profile.txt"
-    
-    # Save the report
-    save_report(profile, df, output_path)
-    
-    print(f"\nProfiling completed for: {csv_path}")
-    print(f"Rows: {profile['rows']}, Columns: {profile['columns']}")
+    report = format_profile_report(profile, df)
+
+    output_name = os.path.splitext(os.path.basename(input_path))[0]
+    output_path = Path("reports/data-profiling") / f"{output_name}-profile.md"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    output_path.write_text(report, encoding="utf-8")
+
+    print(f"Profile saved to {output_path}")
+    print()
+    print(report)
 
 
 if __name__ == "__main__":

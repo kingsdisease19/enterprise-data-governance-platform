@@ -98,6 +98,48 @@ RULES = [
         "violation_sql": 'SELECT COUNT(*) FROM personal_loan WHERE "Experience" < 0',
         "recommendation": "Correct or remove invalid negative experience values; likely a data entry error.",
     },
+    {
+        "id": "BANK-004", "table": "bank", "dimension": "Completeness",
+        "desc": "job must not be null/blank", "severity": "Medium",
+        "violation_sql": "SELECT COUNT(*) FROM bank WHERE job IS NULL OR TRIM(job) = ''",
+        "recommendation": "Investigate source system for missing job entries.",
+    },
+    {
+        "id": "CHURN-005", "table": "churn_modelling", "dimension": "Completeness",
+        "desc": "Geography must not be null/blank", "severity": "Medium",
+        "violation_sql": 'SELECT COUNT(*) FROM churn_modelling WHERE "Geography" IS NULL OR TRIM("Geography") = \'\'',
+        "recommendation": "Investigate source system for missing geography entries.",
+    },
+    {
+        "id": "CHURN-007", "table": "churn_modelling", "dimension": "Consistency",
+        "desc": "Geography must be a known country", "severity": "Low",
+        "violation_sql": "SELECT COUNT(*) FROM churn_modelling WHERE \"Geography\" NOT IN ('France','Spain','Germany')",
+        "recommendation": "Standardize geography values against approved reference list.",
+    },
+    {
+        "id": "HR-004", "table": "hr_attrition", "dimension": "Completeness",
+        "desc": "Attrition must not be null", "severity": "Medium",
+        "violation_sql": 'SELECT COUNT(*) FROM hr_attrition WHERE "Attrition" IS NULL',
+        "recommendation": "Investigate HR data feed for missing attrition flags.",
+    },
+    {
+        "id": "HR-007", "table": "hr_attrition", "dimension": "Consistency",
+        "desc": "Attrition must be Yes or No", "severity": "Low",
+        "violation_sql": "SELECT COUNT(*) FROM hr_attrition WHERE \"Attrition\" NOT IN ('Yes','No')",
+        "recommendation": "Standardize attrition values to Yes/No.",
+    },
+    {
+        "id": "LOAN-003", "table": "personal_loan", "dimension": "Completeness",
+        "desc": "Income must not be null", "severity": "High",
+        "violation_sql": 'SELECT COUNT(*) FROM personal_loan WHERE "Income" IS NULL',
+        "recommendation": "Investigate source feed for missing income values.",
+    },
+    {
+        "id": "LOAN-007", "table": "personal_loan", "dimension": "Consistency",
+        "desc": "Education must be 1, 2, or 3", "severity": "Low",
+        "violation_sql": 'SELECT COUNT(*) FROM personal_loan WHERE "Education" NOT IN (1,2,3)',
+        "recommendation": "Standardize education codes against approved reference list.",
+    },
 ]
 
 

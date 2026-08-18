@@ -10,6 +10,7 @@ Usage:
     python scripts/check_data_quality_sql.py
 """
 
+import pandas as pd
 import os
 from sqlalchemy import create_engine, text
 
@@ -206,9 +207,16 @@ def write_reports(findings):
         file.write("\n".join(score_lines))
 
 
+def save_findings_to_db(findings):
+    df = pd.DataFrame(findings)
+    df.to_sql("quality_findings", engine, if_exists="replace", index=False)
+    print("Findings saved to table 'quality_findings' in PostgreSQL")
+
+
 if __name__ == "__main__":
     findings = run_all_rules()
     write_reports(findings)
+    save_findings_to_db(findings)
     for f in findings:
         print(f"{f['id']} ({f['dimension']}): {f['violations']} violations / {f['total']} rows -> {f['pass_rate']:.2f}%")
     print("\nReports saved to reports/data-quality/")

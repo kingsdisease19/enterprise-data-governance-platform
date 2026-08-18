@@ -83,10 +83,55 @@ STEWARDS = [
     ("Personal Loan & Product Holdings", "Lending Data Steward", "Lending"),
 ]
 
+# --- Data Quality Rules (from docs/data-quality-rules.md) ---
+QUALITY_RULES = [
+    ("BANK-001", "bank.csv", "Validity", "balance should not be negative", "High"),
+    ("BANK-004", "bank.csv", "Completeness", "job must not be null/blank", "Medium"),
+    ("BANK-005", "bank.csv", "Uniqueness", "no fully duplicate rows", "Medium"),
+    ("CHURN-001", "Churn_Modelling.csv", "Uniqueness", "CustomerId must be unique", "Critical"),
+    ("CHURN-002", "Churn_Modelling.csv", "Validity", "Balance must not be negative", "High"),
+    ("CHURN-005", "Churn_Modelling.csv", "Completeness", "Geography must not be null/blank", "Medium"),
+    ("CHURN-007", "Churn_Modelling.csv", "Consistency", "Geography must be a known country", "Low"),
+    ("HR-001", "WA_Fn-UseC_-HR-Employee-Attrition.csv", "Uniqueness", "EmployeeNumber must be unique", "Critical"),
+    ("HR-002", "WA_Fn-UseC_-HR-Employee-Attrition.csv", "Validity", "MonthlyIncome must be greater than 0", "High"),
+    ("HR-004", "WA_Fn-UseC_-HR-Employee-Attrition.csv", "Completeness", "Attrition must not be null", "Medium"),
+    ("HR-007", "WA_Fn-UseC_-HR-Employee-Attrition.csv", "Consistency", "Attrition must be Yes or No", "Low"),
+    ("LOAN-001", "Bank_Personal_Loan_Modelling.xlsx", "Uniqueness", "ID must be unique", "Critical"),
+    ("LOAN-002", "Bank_Personal_Loan_Modelling.xlsx", "Validity", "Experience must not be negative", "High"),
+    ("LOAN-003", "Bank_Personal_Loan_Modelling.xlsx", "Completeness", "Income must not be null", "High"),
+    ("LOAN-007", "Bank_Personal_Loan_Modelling.xlsx", "Consistency", "Education must be 1, 2, or 3", "Low"),
+]
+
+# --- Policy-to-Asset Links (which assets each policy governs) ---
+# Format: (policy_name, [list of asset_names it applies to])
+POLICY_LINKS = [
+    ("PII Access Restriction", [
+        "Retail Customer Register", "Employee Records", "Personal Loan & Product Holdings"
+    ]),
+    ("Raw Data Immutability", [
+        "Bank Customer Contact Register", "Bank Account & Balance Records", "Retail Customer Register",
+        "Customer Churn Status", "Employee Records", "Employee Attrition & Performance Data",
+        "Personal Loan & Product Holdings"
+    ]),
+    ("Quality Rule Enforcement", [
+        "Bank Customer Contact Register", "Bank Account & Balance Records", "Retail Customer Register",
+        "Customer Churn Status", "Employee Records", "Employee Attrition & Performance Data",
+        "Personal Loan & Product Holdings"
+    ]),
+    ("Ownership Requirement", [
+        "Bank Customer Contact Register", "Bank Account & Balance Records", "Retail Customer Register",
+        "Customer Churn Status", "Employee Records", "Employee Attrition & Performance Data",
+        "Personal Loan & Product Holdings"
+    ]),
+]
+
 
 def populate():
     with engine.begin() as conn:
         # Clear existing data so this script can be safely re-run
+        conn.execute(text("DELETE FROM policy_asset_links"))
+        conn.execute(text("DELETE FROM data_quality_rules"))
+        conn.execute(text("DELETE FROM data_dictionary"))
         conn.execute(text("DELETE FROM data_owners"))
         conn.execute(text("DELETE FROM data_stewards"))
         conn.execute(text("DELETE FROM governance_issues"))
@@ -118,12 +163,40 @@ def populate():
         print(f"Inserted {len(GLOSSARY)} glossary terms")
 
         # Governance policies
+        policy_ids = {}
         for name, desc, applies_to in POLICIES:
-            conn.execute(
-                text("INSERT INTO governance_policies (policy_name, description, applies_to) VALUES (:name, :desc, :applies_to)"),
+            result = conn.execute(
+                text("""
+                    INSERT INTO governance_policies (policy_name, description, applies_to)
+                    VALUES (:name, :desc, :applies_to)
+                    RETURNING policy_id
+                """),
                 {"name": name, "desc": desc, "applies_to": applies_to}
             )
+            policy_ids[name] = result.scalar()
         print(f"Inserted {len(POLICIES)} governance policies")
+
+        # Policy-to-asset links
+        link_count = 0
+        for policy_name, asset_names in POLICY_LINKS:
+            for asset_name in asset_names:
+                conn.execute(
+                    text("INSERT INTO policy_asset_links (policy_id, asset_id) VALUES (:policy_id, :asset_id)"),
+                    {"policy_id": policy_ids[policy_name], "asset_id": asset_ids[asset_name]}
+                )
+                link_count += 1
+        print(f"Inserted {link_count} policy-asset links")
+
+        # Data quality rules
+        for rule_id, dataset_name, dimension, desc, severity in QUALITY_RULES:
+            conn.execute(
+                text("""
+                    INSERT INTO data_quality_rules (rule_id, dataset_name, dimension, description, severity)
+                    VALUES (:rule_id, :dataset_name, :dimension, :desc, :severity)
+                """),
+                {"rule_id": rule_id, "dataset_name": dataset_name, "dimension": dimension, "desc": desc, "severity": severity}
+            )
+        print(f"Inserted {len(QUALITY_RULES)} data quality rules")
 
         # Governance issues
         for asset, desc, severity, status, rec in ISSUES:

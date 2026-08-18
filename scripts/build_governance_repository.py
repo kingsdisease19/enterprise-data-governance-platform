@@ -62,9 +62,39 @@ ISSUES = [
     ("Bank_Personal_Loan_Modelling.xlsx - Experience", "52 rows contain a negative Experience value", "High", "Open", "Correct or remove invalid records; likely data entry error"),
 ]
 
+# --- Data Owners & Stewards (linked by asset name, resolved to asset_id at insert time) ---
+OWNERS = [
+    ("Bank Customer Contact Register", "Marketing Director", "Marketing"),
+    ("Bank Account & Balance Records", "Head of Finance", "Finance"),
+    ("Retail Customer Register", "Head of Retail Banking", "Retail Banking"),
+    ("Customer Churn Status", "Head of Customer Analytics", "Retail Banking"),
+    ("Employee Records", "HR Director", "Human Resources"),
+    ("Employee Attrition & Performance Data", "HR Analytics Manager", "Human Resources"),
+    ("Personal Loan & Product Holdings", "Head of Lending", "Lending"),
+]
+
+STEWARDS = [
+    ("Bank Customer Contact Register", "Marketing Analyst", "Marketing"),
+    ("Bank Account & Balance Records", "Finance Data Steward", "Finance"),
+    ("Retail Customer Register", "Customer Data Steward", "Retail Banking"),
+    ("Customer Churn Status", "Customer Analytics Steward", "Retail Banking"),
+    ("Employee Records", "HR Data Steward", "Human Resources"),
+    ("Employee Attrition & Performance Data", "HR Analytics Steward", "Human Resources"),
+    ("Personal Loan & Product Holdings", "Lending Data Steward", "Lending"),
+]
+
 
 def populate():
     with engine.begin() as conn:
+        # Clear existing data so this script can be safely re-run
+        conn.execute(text("DELETE FROM data_owners"))
+        conn.execute(text("DELETE FROM data_stewards"))
+        conn.execute(text("DELETE FROM governance_issues"))
+        conn.execute(text("DELETE FROM governance_policies"))
+        conn.execute(text("DELETE FROM business_glossary"))
+        conn.execute(text("DELETE FROM data_assets"))
+        print("Cleared existing governance repository data")
+
         # Data assets
         asset_ids = {}
         for name, desc, source, classification, criticality in DATA_ASSETS:
@@ -105,6 +135,28 @@ def populate():
                 {"asset": asset, "desc": desc, "severity": severity, "status": status, "rec": rec}
             )
         print(f"Inserted {len(ISSUES)} governance issues")
+
+        # Data owners
+        for asset_name, owner_name, department in OWNERS:
+            conn.execute(
+                text("""
+                    INSERT INTO data_owners (asset_id, owner_name, department)
+                    VALUES (:asset_id, :owner_name, :department)
+                """),
+                {"asset_id": asset_ids[asset_name], "owner_name": owner_name, "department": department}
+            )
+        print(f"Inserted {len(OWNERS)} data owners")
+
+        # Data stewards
+        for asset_name, steward_name, department in STEWARDS:
+            conn.execute(
+                text("""
+                    INSERT INTO data_stewards (asset_id, steward_name, department)
+                    VALUES (:asset_id, :steward_name, :department)
+                """),
+                {"asset_id": asset_ids[asset_name], "steward_name": steward_name, "department": department}
+            )
+        print(f"Inserted {len(STEWARDS)} data stewards")
 
 
 if __name__ == "__main__":

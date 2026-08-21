@@ -11,6 +11,9 @@ Usage:
 """
 
 import os
+import smtplib
+from email.mime.text import MIMEText
+from datetime import datetime
 import pandas as pd
 import streamlit as st
 from sqlalchemy import create_engine, text
@@ -41,6 +44,29 @@ def run_query(sql):
 
 st.set_page_config(page_title="Enterprise Data Governance Portal", layout="wide")
 
+st.markdown("""
+    <style>
+    .main {
+        padding-top: 1rem;
+    }
+    [data-testid="stMetric"] {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 15px;
+    }
+    [data-testid="stSidebar"] {
+        background-color: #0F172A;
+    }
+    [data-testid="stSidebar"] * {
+        color: #F1F5F9 !important;
+    }
+    h1, h2, h3 {
+        color: #0F172A;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.sidebar.title("Governance Portal")
 page = st.sidebar.radio(
     "Navigate",
@@ -55,6 +81,7 @@ page = st.sidebar.radio(
         "Governance Policies",
         "Data Lineage",
         "Governance Issues",
+        "Self-Service Data Review",
     ],
 )
 
@@ -63,8 +90,12 @@ page = st.sidebar.radio(
 # ---------------------------------------------------------
 
 if page == "Governance Dashboard":
-    st.title("Enterprise Data Governance Platform")
-    st.caption("A single portal for data discovery, quality, and governance oversight")
+    st.markdown("""
+        <div style="background-color:#0F172A; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+            <h1 style="color:#FFFFFF; margin:0;">Enterprise Data Governance Platform</h1>
+            <p style="color:#94A3B8; margin:0;">A single portal for data discovery, quality, and governance oversight</p>
+        </div>
+    """, unsafe_allow_html=True)
 
     assets = run_query("SELECT * FROM data_assets")
     issues = run_query("SELECT * FROM governance_issues")
@@ -253,3 +284,130 @@ elif page == "Governance Issues":
         issues = issues[issues["status"] == status_filter]
 
     st.dataframe(issues, use_container_width=True)
+
+# ---------------------------------------------------------
+# 11. Self-Service Data Review
+# ---------------------------------------------------------
+
+elif page == "Self-Service Data Review":
+    st.title("Self-Service Data Review")
+    st.caption("Upload your own dataset for an instant automated check, or request a full governance review")
+
+    tab1, tab2 = st.tabs(["Instant Automated Analysis", "Request Full Governance Review"])
+
+    # --- TAB 1: Instant Analysis ---
+    with tab1:
+        st.write(
+            "This runs an automatic, generic data health check: missing values, "
+            "duplicates, data types, and basic statistics. It does **not** apply "
+            "business-specific rules (e.g. 'balance must not be negative'), since "
+            "those require understanding your specific business context."
+        )
+
+        uploaded_file = st.file_uploader("Upload a CSV or Excel file", type=["csv", "xlsx"])
+
+        if uploaded_file is not None:
+            if uploaded_file.name.endswith(".xlsx"):
+                df = pd.read_excel(uploaded_file)
+            else:
+                df = pd.read_csv(uploaded_file)
+
+            st.success(f"Loaded {df.shape[0]} rows and {df.shape[1]} columns")
+
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Rows", df.shape[0])
+            col2.metric("Columns", df.shape[1])
+            col3.metric("Duplicate Rows", int(df.duplicated().sum()))
+
+            st.subheader("Missing Values")
+            nulls = df.isnull().sum()
+            if nulls.sum() == 0:
+                st.write("Verified: no missing values found in any column.")
+            else:
+                st.dataframe(nulls[nulls > 0].reset_index().rename(
+                    columns={"index": "Column", 0: "Missing Count"}
+                ))
+
+            st.subheader("Column Data Types")
+            st.dataframe(df.dtypes.reset_index().rename(
+                columns={"index": "Column", 0: "Data Type"}
+            ))
+
+            numeric_cols = df.select_dtypes(include="number").columns
+            if len(numeric_cols) > 0:
+                st.subheader("Numeric Summary")
+                st.dataframe(df[numeric_cols].agg(["min", "max", "mean", "median"]).T)
+
+            cat_cols = df.select_dtypes(include="object").columns
+            if len(cat_cols) > 0:
+                st.subheader("Categorical Summary")
+                cat_summary = pd.DataFrame({
+                    "Unique Values": df[cat_cols].nunique(),
+                    "Most Common": df[cat_cols].mode().iloc[0]
+                })
+                st.dataframe(cat_summary)
+
+            st.info(
+                "Want business-specific rules, classification, and ownership assigned "
+                "to this data? Use the 'Request Full Governance Review' tab."
+            )
+
+    # --- TAB 2: Request Full Review (sends an email) ---
+    with tab2:
+        st.write(
+            "Submit a request and I'll personally review your dataset and define "
+            "proper business rules, classification, and ownership recommendations."
+        )
+
+        with st.form("governance_request_form"):
+            name = st.text_input("Your Name")
+            email_address = st.text_input("Your Email")
+            organization = st.text_input("Organization (optional)")
+            message = st.text_area("Tell me about your data / what you need")
+            request_file = st.file_uploader("Attach a sample file (optional)", type=["csv", "xlsx"], key="request_upload")
+            submitted = st.form_submit_button("Submit Request")
+
+        if submitted:
+            if not name or not email_address:
+                st.error("Please provide at least your name and email.")
+            else:
+                file_name = request_file.name if request_file else "No file attached"
+
+                # Save to database
+                with engine.begin() as conn:
+                    conn.execute(
+                        text("""
+                            INSERT INTO governance_requests
+                                (requester_name, requester_email, organization, message, file_name)
+                            VALUES (:name, :email, :org, :msg, :file_name)
+                        """),
+                        {"name": name, "email": email_address, "org": organization,
+                         "msg": message, "file_name": file_name}
+                    )
+
+                # Send email notification
+                try:
+                    gmail_address = os.environ.get("GMAIL_ADDRESS")
+                    gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
+
+                    body = (
+                        f"New Governance Review Request\n\n"
+                        f"Name: {name}\n"
+                        f"Email: {email_address}\n"
+                        f"Organization: {organization}\n"
+                        f"File: {file_name}\n\n"
+                        f"Message:\n{message}\n\n"
+                        f"Submitted: {datetime.now()}"
+                    )
+                    msg = MIMEText(body)
+                    msg["Subject"] = f"Governance Review Request from {name}"
+                    msg["From"] = gmail_address
+                    msg["To"] = gmail_address
+
+                    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                        server.login(gmail_address, gmail_password)
+                        server.send_message(msg)
+
+                    st.success("Request submitted and emailed successfully!")
+                except Exception as e:
+                    st.warning(f"Request saved, but email failed to send: {e}")

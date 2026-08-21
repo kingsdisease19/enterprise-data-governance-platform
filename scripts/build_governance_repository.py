@@ -56,12 +56,6 @@ POLICIES = [
     ("Ownership Requirement", "Every registered data asset must have an assigned Data Owner and Data Steward", "All datasets"),
 ]
 
-# --- Governance Issues (derived from real quality findings) ---
-ISSUES = [
-    ("bank.csv - balance", "688 rows contain a negative balance value", "High", "Open", "Confirm with Finance whether overdrafts are valid; investigate source if not"),
-    ("Bank_Personal_Loan_Modelling.xlsx - Experience", "52 rows contain a negative Experience value", "High", "Open", "Correct or remove invalid records; likely data entry error"),
-]
-
 # --- Data Owners & Stewards (linked by asset name, resolved to asset_id at insert time) ---
 OWNERS = [
     ("Bank Customer Contact Register", "Marketing Director", "Marketing"),
@@ -125,6 +119,24 @@ POLICY_LINKS = [
     ]),
 ]
 
+# --- Data Lineage (same 6 stages for every asset, since all datasets follow the same pipeline) ---
+LINEAGE_STAGES = [
+    (1, "Source", "Original open dataset downloaded from Kaggle"),
+    (2, "Raw Storage", "Untouched original file stored in datasets/raw/"),
+    (3, "Database Load", "Loaded into PostgreSQL table via load_to_postgres.py"),
+    (4, "Quality Check", "Quality rules run via check_data_quality_sql.py, results stored in quality_findings"),
+    (5, "Power BI Dashboard", "quality_findings table visualized in Power BI dashboard"),
+    (6, "Streamlit Portal", "Governance repository surfaced via Streamlit portal (Sprint 7.5)"),
+]
+
+# --- Governance Issues (rebuilt to link directly to asset_id) ---
+ISSUES_V2 = [
+    ("Bank Account & Balance Records", "688 rows contain a negative balance value", "High", "Open",
+     "Confirm with Finance whether overdrafts are valid; investigate source if not"),
+    ("Personal Loan & Product Holdings", "52 rows contain a negative Experience value", "High", "Open",
+     "Correct or remove invalid records; likely data entry error"),
+]
+
 
 def populate():
     with engine.begin() as conn:
@@ -135,6 +147,7 @@ def populate():
         conn.execute(text("DELETE FROM data_owners"))
         conn.execute(text("DELETE FROM data_stewards"))
         conn.execute(text("DELETE FROM governance_issues"))
+        conn.execute(text("DELETE FROM data_lineage"))
         conn.execute(text("DELETE FROM governance_policies"))
         conn.execute(text("DELETE FROM business_glossary"))
         conn.execute(text("DELETE FROM data_assets"))
@@ -198,16 +211,31 @@ def populate():
             )
         print(f"Inserted {len(QUALITY_RULES)} data quality rules")
 
-        # Governance issues
-        for asset, desc, severity, status, rec in ISSUES:
+        # Governance issues (linked to asset_id)
+        for asset_name, desc, severity, status, rec in ISSUES_V2:
             conn.execute(
                 text("""
-                    INSERT INTO governance_issues (related_asset, issue_description, severity, status, recommendation)
-                    VALUES (:asset, :desc, :severity, :status, :rec)
+                    INSERT INTO governance_issues (related_asset, asset_id, issue_description, severity, status, recommendation)
+                    VALUES (:asset_name, :asset_id, :desc, :severity, :status, :rec)
                 """),
-                {"asset": asset, "desc": desc, "severity": severity, "status": status, "rec": rec}
+                {"asset_name": asset_name, "asset_id": asset_ids[asset_name], "desc": desc,
+                 "severity": severity, "status": status, "rec": rec}
             )
-        print(f"Inserted {len(ISSUES)} governance issues")
+        print(f"Inserted {len(ISSUES_V2)} governance issues")
+
+        # Data lineage (same 6 stages applied to every registered asset)
+        lineage_count = 0
+        for asset_name, asset_id in asset_ids.items():
+            for order, stage_name, stage_desc in LINEAGE_STAGES:
+                conn.execute(
+                    text("""
+                        INSERT INTO data_lineage (asset_id, stage_order, stage_name, stage_description)
+                        VALUES (:asset_id, :stage_order, :stage_name, :stage_desc)
+                    """),
+                    {"asset_id": asset_id, "stage_order": order, "stage_name": stage_name, "stage_desc": stage_desc}
+                )
+                lineage_count += 1
+        print(f"Inserted {lineage_count} lineage records")
 
         # Data owners
         for asset_name, owner_name, department in OWNERS:
